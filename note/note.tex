@@ -1,0 +1,105 @@
+\documentclass[a4j,twocolumn]{jarticle}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{txfonts}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\begin{document}
+  \pagestyle{fancy}
+  \lhead{AIwolf 2018}
+  \chead{Agent Sol}
+  \rhead{\thepage}
+  \cfoot{}
+\section{このエージェントについて}
+  プロトコル部門向けのエージェントになります。
+  エージェント本体はPython3で記述しています。
+  パッケージはnumpy, scipy, pandasなどを使用しています。
+  通信などについては公開されているHaradaさんのAIwolfPyのものを使用しています。
+\section{起動方法}
+  \begin{enumerate}
+    \item AIwolfを人狼知能HPよりDL
+    \item 適当な場所に展開
+    \item StartServer.shを実行、人数を決め、Connectをクリック
+    \item python3 Sol.py -h localhost -p 10000を実行
+  \end{enumerate}
+  人数合わせのために他のjavaエージェントなどをつなぐ場合はStartGUIClient.shを実行するとすぐにできる
+\section{メソッド}
+  \subsection{talk}
+    turn制で、生存プレイヤが全員一斉に発話する。
+    returnで話す内容を指定する。
+    プロトコル部門ではcontentbuilderのメソッドを返し、自然言語部門では文字列を返す。
+  \subsection{whisper}
+    人狼が2人以上生存している場合にのみ実行可能。
+    人狼にしか送信されないtalk。
+    returnで話す内容を指定する。
+    プロトコル部門ではcontentbuilderのメソッドを返し、自然言語部門では文字列を返す。
+  \subsection{vote}
+    処刑対象の指定。
+    returnで投票対象のエージェント番号を指定する。
+  \subsection{attack}
+    人狼のみ可能なメソッド。
+    returnで攻撃先のエージェント番号を指定する。
+  \subsection{divine}
+    占い師のみ可能なメソッド。
+    returnで占い先のエージェント番号を指定する。
+  \subsection{guard}
+    狩人のみ可能なメソッド。
+    returnで護衛先のエージェント番号を指定する。
+  \subsection{initialize}
+    ゲームの初期化時に呼ばれるメソッド。
+  \subsection{update}
+    更新情報がある時に呼ばれるメソッド。
+    Java版と挙動が異なるため注意。
+    daily\_finishやrequestを内包する。
+  \subsection{dayStart}
+    前日のいろいろな結果が来るメソッド。
+  \subsection{finish}
+    ゲーム終了時に呼ばれるメソッド。
+    何故か2回呼ばれるらしい。
+\section{データ構造}
+  \subsection{base\_info}
+    辞書型で基礎的な情報すべてを保持している。
+    initializeやupdate時に渡される。
+    \begin{itemize}
+      \item[agentIdx] 自身のエージェント番号
+      \item[myRole] 自身のエージェントの役職
+      \item[roleMap] 役職のdict。他のエージェントの役職が確定的にわかる場合(人狼の場合など)はここに入る
+      \item[statusMap] エージェントの生死を表すdict
+      \item[remainTalkMap] 生存エージェントのその日の残り発話可能回数を表すdict
+      \item[remainWhisperMap] Agentのその日の残りの可能な囁き回数を表すdict
+    \end{itemize}
+  \subsection{diff\_data}
+    pandas DataFrameで、ゲームに関わる情報を保持している。
+    6列存在し、{agent, day, idx, text, turn, type}がある。
+    typeによって内容の意味が異なる。
+    \subsubsection{type = initialize, finish}
+      agent = idx = agentIdx (自分自身) \par
+      initializeの場合はday = 0 \par
+      turn = 0 \par
+      text = comingout文 \par
+    \subsubsection{type = talk, whisper}
+      agent = 発話者 \par
+      day = 日付 \par
+      idx = talk/whisperのid \par
+      turn = talk/whisperのturn \par
+      text = 発話文そのまま
+    \subsubsection{type = attack\_vote, vote}
+      agent = 投票対象 \par
+      idx = 投票者 \par
+      turn = 0 再投票時は-1 \par
+      text = vote/attack文
+    \subsubsection{type = execute, dead}
+      agent = 死者 \par
+      idx = turn = 0 \par
+      text = Over
+    \subsubsection{type = divine, identify, guard}
+      agent = 能力の対象 \par
+      idx = 能力使用者 \par
+      turn = 0 \par
+      text = devined/identified/guarded文
+    \subsubsection{type = attack}
+      agent = 襲撃対象 \par
+      idx = turn = 0 \par
+      text = attack文
+\end{document}
